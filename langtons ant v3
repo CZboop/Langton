@@ -1,0 +1,234 @@
+import pygame, math, random, sys
+import numpy as np
+
+#initialising fonts
+pygame.font.init()
+
+#setting up window
+WIDTH, HEIGHT = 600, 650
+WIN = pygame.display.set_mode((WIDTH,HEIGHT))
+pygame.display.set_caption("Welcome to Langtown")
+
+#setting some colours
+BLUE = (100,120,250)
+BLACK = (0,0,0)
+RED = (255,0,0)
+
+#setting some fonts
+SML_FONT = pygame.font.SysFont("Impact",20)
+MED_FONT = pygame.font.SysFont("Impact",35)
+LRG_FONT = pygame.font.SysFont("Impact",60)
+HUGE_FONT = pygame.font.SysFont("Impact",80)
+
+#creating the block class which corresponds to each cell in the grid
+class Block:
+    #initialising
+    def __init__(self,grid,size,state=False):
+        self.state = state #true or false will determine colour and behaviour
+        self.grid = grid #location in the grid
+        self.size = size
+
+    #drawing the blocks if their state is true/on
+    def draw(self):
+        if self.state==True:
+            pygame.draw.rect(WIN,BLACK,(self.grid[0]*self.size,self.grid[1]*self.size,self.size,self.size))
+        else:
+            pass
+    #method to create a rect collision object for each block
+    def make_rect(self):
+        rect = pygame.Rect(self.grid[0]*20,self.grid[1]*20,20,20)
+        return rect
+
+#making the ant class
+class Ant:
+    #initialising
+    def __init__(self, direction, grid, ant_rect, size=3):
+        self.direction = direction #direction the ant is 'facing' and will travel
+        self.grid = grid #location in grid
+        self.ant_rect = rect #location and dimensions for the rect to be made with
+        self.size = size
+
+    #method to move the ant
+    def move(self):
+        self.ant_rect = pygame.Rect(self.grid[0]*self.size,self.grid[1]*self.size,self.size,self.size)
+
+        #takes the location of the ant in the grid and acts depending on the state of the cell in that position
+        if states[self.grid[0]][self.grid[1]]==False:
+            #switches state from false to true
+            states[self.grid[0]][self.grid[1]]=True
+
+            #changes direction of the ant,based on this turmite's rules:
+            #clockwise i.e. up->right, right->down,down->left, left->up, list is ordered to make this simpler - goes to the next in directions list
+            try:
+                self.direction = directions[directions.index(self.direction)+1]
+            except:
+                self.direction = directions[0]
+
+        elif states[self.grid[0]][self.grid[1]]==True:
+            #switches from true to false
+            states[self.grid[0]][self.grid[1]]=False
+
+            #changes direction base on rules, again using the list order
+            try:
+                self.direction = directions[directions.index(self.direction)-1]
+            except:
+                self.direction = directions[-1]
+
+        #moves the ant based on it's direction
+        if self.direction=="up":
+            self.grid[1]-=1
+        elif self.direction=="down":
+            self.grid[1]+=1
+        elif self.direction=="left":
+            self.grid[0]-=1
+        elif self.direction=="right":
+            self.grid[0]+=1
+
+    #draws the ant in the relevant location
+    def draw(self):
+        pygame.draw.rect(WIN,RED,(self.grid[0]*self.size,self.grid[1]*self.size,self.size,self.size))
+
+#making some lists that will be used later
+blocks = []
+rects = []
+states = []
+
+#making the grid of blocks, adding these plus their rects and states to lists to be iterated over in the game loop
+for i in range(200):
+    state_sublist = []
+    for j in range(200):
+        b = Block([i,j],3)
+        rect = Block.make_rect(b)
+        rects.append(rect)
+        blocks.append(b)
+        state_sublist.append(False)
+    states.append(state_sublist)
+
+
+#directions list
+directions = ["up","right","down","left"]
+
+#somewhat central start point
+location = blocks[22500]
+
+#creating the ant with a random direction
+ant = Ant(random.choice(directions),location.grid,pygame.Rect(location.grid[0]*3,location.grid[1]*3,3,3))
+
+#crop for saving just the grid as an image
+CROP = pygame.Surface((600,600))
+
+#function that runs everything
+def main():
+    global ant
+    run = True
+
+    #setting the speed
+    clock = pygame.time.Clock()
+    speed = 60
+
+    while run:
+        #getting mouse position as a variable
+        pos = pygame.mouse.get_pos()
+
+        #background fill
+        WIN.fill((255,255,255))
+        WIN.fill(BLUE)
+        clock.tick(speed)
+
+        #drawing each block and changing the state if necessary
+        for i in blocks:
+            Block.draw(i)
+            i.state = states[i.grid[0]][i.grid[1]]
+
+        #using the draw and move methods to draw and move the ant
+        Ant.draw(ant)
+        Ant.move(ant)
+
+        #drawing the buttons to restart and save, with corresponding collision rects so clicks on them can be easily detected
+        restart = pygame.draw.rect(WIN, BLACK, (5,605,200,40))
+        restart_txt = MED_FONT.render("RESTART",1,BLUE)
+        WIN.blit(restart_txt, ((205-restart_txt.get_width())/2,603))
+        save = pygame.draw.rect(WIN, BLACK, (395,605,200,40))
+        save_txt = MED_FONT.render("SAVE IMAGE",1,BLUE)
+        WIN.blit(save_txt, (415,603))
+
+        #updating display
+        pygame.display.update()
+
+        #handling events
+        for event in pygame.event.get():
+            #quitting if quit button clicked
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            #left mouse button events
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
+
+                #resetting everything and restarting if restart button pressed
+                if restart.collidepoint(pos):
+                    blocks.clear()
+                    rects.clear()
+                    states.clear()
+                    for i in range(200):
+                        state_sublist = []
+                        for j in range(200):
+                            b = Block([i,j],3)
+                            rect = Block.make_rect(b)
+                            rects.append(rect)
+                            blocks.append(b)
+                            state_sublist.append(False)
+                        states.append(state_sublist)
+
+                    location = blocks[22500]
+                    ant = Ant(random.choice(directions),location.grid,pygame.Rect(location.grid[0]*3,location.grid[1]*3,3,3))
+                    start_screen()
+
+                #saving as image if save button clicked
+                if save.collidepoint(pos):
+                    CROP.blit(WIN,(0,0),(0,0,600,600))
+                    pygame.image.save(CROP,"ant{}.png".format("".join(str(random.randint(1,20)) for i in range(3))))
+
+#opening screen
+def start_screen():
+    start = True
+    hover_start = False
+    hover_custom = False
+
+    while start:
+        #getting mouse position as a variable for collisions
+        pos = pygame.mouse.get_pos()
+
+        #background fill
+        WIN.fill(BLUE)
+        pygame.draw.rect(WIN, BLACK, (5,5,590,640),2)
+
+        #adding titles
+        title = LRG_FONT.render("WELCOME TO LANGTOWN",1,BLACK)
+        WIN.blit(title,((WIDTH-title.get_width())/2,150))
+        subtitle = SML_FONT.render("POPULATION: ANT",1,BLACK)
+        WIN.blit(subtitle,((WIDTH-subtitle.get_width())/2,250))
+
+        #adding start button
+        start = pygame.draw.rect(WIN,BLUE,(150,420,300,80))
+        pygame.draw.rect(WIN,BLACK,(150,420,300,80),2)
+        standard_txt = MED_FONT.render("STANDARD MODE",1,BLACK)
+        WIN.blit(standard_txt,((WIDTH-standard_txt.get_width())/2,438))
+
+        #updating display
+        pygame.display.update()
+
+        #events
+        for event in pygame.event.get():
+            #quitting if quit clicked
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            #starting main if start clicked
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
+                if start.collidepoint(pos):
+                    main()
+#running the game
+if __name__=="__main__":
+    start_screen()
