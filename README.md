@@ -1,2 +1,2 @@
-# Langton-s-Ant
+# Langton-s-Ant :ant:
 A PyGame window that runs Langton's Ant
