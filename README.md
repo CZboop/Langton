@@ -1,5 +1,5 @@
 # Langton's Ant :ant:
-A PyGame window that runs Langton's Ant
+Langton's Ant in PyGame
 
 Here it is in action, over 10x speed:
 
