@@ -1,5 +1,5 @@
 # Langton's Ant :ant:
-Langton's Ant in PyGame
+Langton's Ant in PyGame!
 
 Here it is in action, over 10x speed:
 
